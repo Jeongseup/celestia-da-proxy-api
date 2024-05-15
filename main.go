@@ -69,16 +69,21 @@ func main() {
 	// Swagger 문서 라우트 설정
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
+	// routes for test
+	app.Post("/test_receive_jsondata", ReceiveJSON)
+	app.Post("/test_receive_formdata", ReceiveFormData)
+	app.Get("/test_blob", TestBlobController)
+
 	// routes for default
-	app.Get("/health", HealthCheck)
 	app.Get("/hello", HelloCheck)
 	app.Get("/error", ErrorCheck)
 
 	// routes for da
 	app.Get("/node_info", NodeInfoController)
-	app.Post("/submit_blob", SubmitBlobController)
-	app.Post("/retrieve_blob", RetrieveBlobController)
-	app.Get("/test_blob", TestBlobController)
+	app.Post("/submit_metadata", SubmitJSONDataController)
+	app.Post("/submit_formdata", SubmitFormDataController)
+	app.Post("/retrieve_blob", RetrieveBlobController2)
+	app.Get("/retrieve_blob", RetrieveBlobController)
 
 	// start server...
 	if err := app.Listen(":3000"); err != nil {

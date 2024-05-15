@@ -39,6 +39,31 @@ func NodePing(ctx context.Context, url string, token string) (header.ExtendedHea
 	return *resp, nil
 }
 
+func GetBlob(ctx context.Context, url string, token string, height uint64, namespaceID []byte) (*blob.Blob, error) {
+	client, err := openrpc.NewClient(ctx, url, token)
+	if err != nil {
+		return nil, err
+	}
+
+	defer client.Close()
+
+	// let's post to 0xDEADBEEF namespace
+	namespace, err := share.NewBlobNamespaceV0(namespaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// func NewBlobV0(namespace share.Namespace, data []byte) (*Blob, error) {
+
+	// fetch the blob back from the network
+	blob, err := client.Blob.Get(ctx, height, namespace, blob.Commitment{})
+	if err != nil {
+		return nil, err
+	}
+
+	return blob, nil
+}
+
 // Blob was included at height 1826272
 // Blobs are equal? false
 func GetBlobs(ctx context.Context, url string, token string, height uint64) ([]*blob.Blob, error) {

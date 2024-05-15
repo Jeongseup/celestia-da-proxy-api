@@ -1,8 +1,11 @@
 package main
 
+import "encoding/json"
+
 type Data struct {
-	RetrieveHeight string `json:"retrieve_height"`
-	Data           []byte `json:"data"`
+	RetrieveHeight string          `json:"retrieve_height"`
+	Data           []byte          `json:"data"`
+	MetaData       json.RawMessage `json:"metadata"`
 }
 
 // Response 구조체 정의

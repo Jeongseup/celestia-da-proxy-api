@@ -67,14 +67,14 @@ func SubmitBlobController(c *fiber.Ctx) error {
 	l.Infof("received data: %v", payload.Data)
 
 	// create context
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	svgStr := "data:image/svg+xml;base64,CiAgICAgIDxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+CiAgICAgICAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDAiIGZpbGw9IiNhZDExZjciIC8+CiAgICAgICAgPHRleHQgeD0iNTAiIHk9IjUwIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IndoaXRlIj5IYWNrYXRoZW15PC90ZXh0PgogICAgICA8L3N2Zz4KICAgIA=="
-	svgBz := []byte(svgStr)
+	// svgStr := "data:image/svg+xml;base64,CiAgICAgIDxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+CiAgICAgICAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDAiIGZpbGw9IiNhZDExZjciIC8+CiAgICAgICAgPHRleHQgeD0iNTAiIHk9IjUwIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IndoaXRlIj5IYWNrYXRoZW15PC90ZXh0PgogICAgICA8L3N2Zz4KICAgIA=="
+	// svgBz := []byte(svgStr)
 
 	// submit data
-	height, err := SubmitBlob(ctx, celestiaRpcAddress, authToken, svgBz)
+	height, err := SubmitBlob(ctx, celestiaRpcAddress, authToken, payload.Data)
 	if err != nil {
 		l.Errorf("unexpected err: %s", err)
 		resp := Response{
@@ -87,7 +87,7 @@ func SubmitBlobController(c *fiber.Ctx) error {
 	response := Response{
 		Success: true,
 		Result: fiber.Map{
-			"submitted_data": svgBz,
+			"submitted_data": payload.Data,
 			"height":         height,
 		},
 	}

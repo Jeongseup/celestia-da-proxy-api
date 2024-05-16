@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+
+	"database/sql"
 
 	_ "github.com/Jeongseup/celestia-da-proxy-api/docs" // yourproject 경로를 실제 프로젝트 경로로 변경하세요
 	"github.com/gofiber/fiber/v2"
@@ -15,8 +18,8 @@ import (
 var (
 	celestiaRpcAddress string
 	authToken          string
-
-	l *logrus.Logger
+	l                  *logrus.Logger
+	db                 *sql.DB
 )
 
 // @title Fiber Swagger Example API
@@ -59,6 +62,13 @@ func main() {
 	}
 	l.SetLevel(level)
 
+	// Initialize SQLite database
+	db, err = InitDB("./data.db")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer db.Close()
+
 	app := fiber.New()
 
 	// Fiber 로거 미들웨어를 logrus와 통합
@@ -86,7 +96,8 @@ func main() {
 	app.Get("/retrieve_blob", RetrieveBlobController)
 
 	// start server...
-	if err := app.Listen(":3000"); err != nil {
+	port := os.Getenv("PORT")
+	if err := app.Listen(fmt.Sprintf(":%s", port)); err != nil {
 		panic(err)
 	}
 }

@@ -1,3 +1,5 @@
 tmp
 .env
 *.base64
+data.db
+TODO

@@ -107,3 +107,13 @@ curl -X GET http://hackathemy.me/health
 ```bash
 brew install potrace
 ```
+
+### References
+
+https://jaredwinick.github.io/base64-image-viewer/?ref=tiny-helpers
+
+https://www.based64.xyz/
+
+https://docs.celestia.org/developers/golang-client-tutorial
+
+https://docs.opensea.io/docs/metadata-standards

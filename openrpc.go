@@ -32,7 +32,7 @@ func NodePing(ctx context.Context, url string, token string) (header.ExtendedHea
 	return *resp, nil
 }
 
-func GetBlob(ctx context.Context, url string, token string, height uint64, hashStr string) (*blobtypes.Blob, error) {
+func GetBlob(ctx context.Context, url string, token string, height uint64, namespaceKey []byte, hashStr string) (*blobtypes.Blob, error) {
 	client, err := openrpc.NewClient(ctx, url, token)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func GetBlob(ctx context.Context, url string, token string, height uint64, hashS
 	defer client.Close()
 
 	// let's post to 0xDEADBEEF namespace
-	namespace, err := share.NewBlobNamespaceV0(celestiaDragonsNamespace)
+	namespace, err := share.NewBlobNamespaceV0(namespaceKey)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func GetBlob(ctx context.Context, url string, token string, height uint64, hashS
 
 // Blob was included at height 1826272
 // Blobs are equal? false
-func GetBlobs(ctx context.Context, url string, token string, height uint64) ([]*blobtypes.Blob, error) {
+func GetBlobs(ctx context.Context, url string, token string, height uint64, namespaceKey []byte) ([]*blobtypes.Blob, error) {
 	client, err := openrpc.NewClient(ctx, url, token)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func GetBlobs(ctx context.Context, url string, token string, height uint64) ([]*
 	defer client.Close()
 
 	// let's post to 0xDEADBEEF namespace
-	namespace, err := share.NewBlobNamespaceV0(celestiaDragonsNamespace)
+	namespace, err := share.NewBlobNamespaceV0(namespaceKey)
 	if err != nil {
 		return nil, err
 	}
@@ -151,10 +151,16 @@ func SubmitBlob(ctx context.Context, url string, token string, namespaceKey []by
 
 	defer client.Close()
 
+	l.Infof("using SubmitBlob bytes: %v", namespaceKey)
+	l.Infof("using SubmitBlob bytes: %X", namespaceKey)
+	l.Infof("using SubmitBlob bytes: %s", namespaceKey)
+
 	namespace, err := share.NewBlobNamespaceV0(namespaceKey)
 	if err != nil {
 		return 0, err
 	}
+
+	l.Infof("used namespace: %s", namespace.String())
 
 	// create a blob
 	createdBlob, err := blobtypes.NewBlobV0(namespace, data)
@@ -179,7 +185,7 @@ func SubmitBlob(ctx context.Context, url string, token string, namespaceKey []by
 	// 그냥 해당 높이에 하나씩만 있다고 가정
 	for _, blob := range retrievedBlobs {
 		l.Printf("blob commitment: %v \n", blob.Commitment)
-		l.Printf("blob Namespace: %v \n", blob.Namespace)
+		l.Printf("blob Namespace: %X \n", blob.Namespace)
 		l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
 		l.Printf("blob Data: %d \n", len(blob.Data))
 		l.Printf("blob index: %d \n", blob.Index)

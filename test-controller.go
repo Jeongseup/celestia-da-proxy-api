@@ -13,7 +13,7 @@ func TestBlobController(c *fiber.Ctx) error {
 	defer cancel()
 
 	l.Println("=== test case 4 : GetBlobs ===")
-	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, 1826272)
+	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, 1826272, celestiaDragonsNamespace)
 	if err != nil {
 		log.Println(err)
 	}

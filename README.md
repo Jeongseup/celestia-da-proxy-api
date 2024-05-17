@@ -8,7 +8,7 @@ Descrption...
 
 ```bash
 
- curl --location 'https://https://nftinfo.online/submit_formdata' \
+ curl --location 'https://nftinfo.online/submit_formdata' \
 --form 'image=@"/Users/jeongseup/Downloads/CelestiaDragonsNFT/DALL·E 2024-05-15 19.11.55 - A cute, animated-style dragon designed to be stored on a blockchain named Celestia. The dragon has big, sparkling eyes and a small, friendly smile. It.webp"'
 
 #{"success":true,"result":{"hash":"97110C95BB4FD3BDD7520744A2FA8C03DC034DDE2C668647784F32A4BAE14E8C","submitted_height":1844378}}%
@@ -53,7 +53,7 @@ curl -sS -X POST https://https://nftinfo.online/submit_metadata -H "Content-Type
 3. Retrieve Metadata By Namespace Key & Index
 
 ```bash
-curl -sS -X GET https://https://nftinfo.online/Q2VsZXN0aW/1
+curl -sS -X GET https://nftinfo.online/Q2VsZXN0aW/1
 ```
 
 ### References

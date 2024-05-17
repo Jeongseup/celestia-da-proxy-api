@@ -74,7 +74,7 @@ func SubmitJSONDataController(c *fiber.Ctx) error {
 	namespaceKey := []byte(encodedNamesapceKey)[:10]
 
 	// create context
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	// submit data
@@ -88,49 +88,58 @@ func SubmitJSONDataController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	l.Infof("Metadata Blob was included at height %d in %X namespace\n", height, namespaceKey)
+	l.Infof("Metadata Blob was included at height %d in %s namespace\n", height, namespaceKey)
 
-	// retrieve blobs
-	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, height)
-	if err != nil {
-		resp := Response{
-			Success: false,
-			Error:   fmt.Sprintf("Successfully, submitted formdata to celestia da but, failed to retrieve blobs in the height. unexpected err: %s", err.Error()),
+	for {
+		select {
+		case <-ctx.Done():
+			l.Infoln("context done... ")
+			resp := Response{
+				Success: false,
+				Error:   "Timeout: Failed to retrieve blobs within the given timeframe",
+			}
+			return c.Status(fiber.StatusRequestTimeout).JSON(resp)
+		default:
+			retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, height, namespaceKey)
+			if err == nil {
+				var hashStr string
+				for _, blob := range retrievedBlobs {
+					if bytes.Equal(blob.Data, payload.MetaData) {
+						l.Infof("found matched metadata in blobs in %d height!", height)
+						l.Printf("blob commitment hash: %X \n", blob.Commitment)
+						hashStr = fmt.Sprintf("%X", blob.Commitment)
+						break
+					}
+				}
+
+				// insert db hash for saving height
+				index, err := InsertNamespace(db, string(namespaceKey), hashStr, int(height))
+				if err != nil {
+					resp := Response{
+						Success: false,
+						Error:   fmt.Sprintf("Successfully, submitted formdata to celestia da but, failed to save commitment hash & height in db. unexpected err: %s", err.Error()),
+					}
+					return c.Status(fiber.StatusBadRequest).JSON(resp)
+				}
+
+				response := Response{
+					Success: true,
+					Result: fiber.Map{
+						"namespace_key":            string(namespaceKey),
+						"submitted_metadata_index": index,
+						"submitted_metadata":       payload.MetaData,
+						"submitted_height":         height,
+					},
+				}
+				return c.JSON(response)
+			} else {
+				l.Infof("failed to retrieve blob from da. sleep 1s and explore again until max 30s")
+			}
+
+			time.Sleep(1 * time.Second)
 		}
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	var hashStr string
-	for _, blob := range retrievedBlobs {
-		if bytes.Equal(blob.Data, payload.MetaData) {
-			l.Infof("found matched metadata in blobs in %d height!", height)
-			l.Printf("blob commitment hash: %X \n", blob.Commitment)
-			// l.Printf("blob commitment: %s \n", blob.Commitment)
-			hashStr = fmt.Sprintf("%X", blob.Commitment)
-			break
-		}
-	}
-
-	// insert db hash for saving height
-	index, err := InsertNamespace(db, string(namespaceKey), hashStr, int(height))
-	if err != nil {
-		resp := Response{
-			Success: false,
-			Error:   fmt.Sprintf("Successfully, submitted formdata to celestia da but, failed to save commitment hash & height in db. unexpected err: %s", err.Error()),
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
-	}
-
-	response := Response{
-		Success: true,
-		Result: fiber.Map{
-			"namespace_key":            string(namespaceKey),
-			"submitted_metadata_index": index,
-			"submitted_metadata":       payload.Data,
-			"submitted_height":         height,
-		},
-	}
-	return c.JSON(response)
 }
 
 func SubmitFormDataController(c *fiber.Ctx) error {
@@ -189,7 +198,7 @@ func SubmitFormDataController(c *fiber.Ctx) error {
 	l.Infof("FormData Blob was included at height %d\n", height)
 
 	// retrieve blobs
-	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, height)
+	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, height, celestiaDragonsNamespace)
 	if err != nil {
 		// l.Errorf("Successfully, submitted formdata to celestia da but, failed to retrieve blobs in the height. unexpected err: %s", err)
 		resp := Response{
@@ -233,8 +242,9 @@ func SubmitFormDataController(c *fiber.Ctx) error {
 
 func RetrieveBlobController(c *fiber.Ctx) error {
 	retrieveHeightStr := c.Query("height")
-
+	namespaceKeyStr := c.Query("namespace_key")
 	l.Infof("received height: %s", retrieveHeightStr)
+	l.Infof("received namespace_key: %s", namespaceKeyStr)
 
 	retrieveHeight, err := strconv.ParseUint(retrieveHeightStr, 10, 64)
 	if err != nil {
@@ -250,7 +260,7 @@ func RetrieveBlobController(c *fiber.Ctx) error {
 	defer cancel()
 
 	// submit data
-	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, retrieveHeight)
+	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, retrieveHeight, []byte(namespaceKeyStr))
 	if err != nil {
 		l.Errorf("unexpected err: %s", err)
 		resp := Response{
@@ -294,7 +304,7 @@ func RetrieveBlobByCommitment(c *fiber.Ctx) error {
 	defer cancel()
 
 	// submit data
-	blob, err := GetBlob(ctx, celestiaRpcAddress, authToken, uint64(retrieveHeight), hashStr)
+	blob, err := GetBlob(ctx, celestiaRpcAddress, authToken, uint64(retrieveHeight), celestiaDragonsNamespace, hashStr)
 	if err != nil {
 		l.Errorf("unexpected err: %s", err)
 		resp := Response{
@@ -344,7 +354,7 @@ func RetrieveBlobByNamespaceKey(c *fiber.Ctx) error {
 	defer cancel()
 
 	// get blob by height and commitment hash
-	blob, err := GetBlob(ctx, celestiaRpcAddress, authToken, uint64(height), hashStr)
+	blob, err := GetBlob(ctx, celestiaRpcAddress, authToken, uint64(height), []byte(namespace), hashStr)
 	if err != nil {
 		l.Errorf("unexpected err: %s", err)
 		resp := Response{

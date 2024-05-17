@@ -106,8 +106,6 @@ func main() {
 	app.Get("/:namespace/:index_number", RetrieveBlobByNamespaceKey)
 	app.Get("/:hash", RetrieveBlobByCommitment)
 
-	// app.Get("/retrieve_blob_by_commitment", RetrieveBlobByCommitment)
-
 	// start server...
 	port := os.Getenv("PORT")
 	if port == "" {

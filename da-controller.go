@@ -19,6 +19,7 @@ import (
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
 // @Router /node_info [get]
+// @tags Celestia DA
 func NodeInfoController(c *fiber.Ctx) error {
 	// create context
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -50,6 +51,14 @@ func NodeInfoController(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
+// @Summary Submits JSON data
+// @Description Submits JSON data to Celestia DA
+// @Produce json
+// @Param data body Data true "Data payload"
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
+// @Router /submit_metadata [post]
+// @tags Celestia DA
 func SubmitJSONDataController(c *fiber.Ctx) error {
 	var payload Data
 
@@ -144,9 +153,16 @@ func SubmitJSONDataController(c *fiber.Ctx) error {
 			time.Sleep(1 * time.Second)
 		}
 	}
-
 }
 
+// @Summary Submits form data
+// @Description Submits form data (image) to Celestia DA
+// @Produce json
+// @Param image formData file true "Image file"
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
+// @Router /submit_formdata [post]
+// @tags Celestia DA
 func SubmitFormDataController(c *fiber.Ctx) error {
 	// 파일 업로드 처리
 	file, err := c.FormFile("image")
@@ -245,6 +261,15 @@ func SubmitFormDataController(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+// @Summary Retrieves blob by height and namespace key
+// @Description Retrieves a blob from Celestia DA by height and namespace key
+// @Produce octet-stream
+// @Param height query int true "Block height"
+// @Param namespace_key query string true "Namespace key"
+// @Success 200 {file} byte
+// @Failure 400 {object} Response
+// @Router /retrieve_blob [get]
+// @tags Celestia DA
 func RetrieveBlobController(c *fiber.Ctx) error {
 	retrieveHeightStr := c.Query("height")
 	namespaceKeyStr := c.Query("namespace_key")
@@ -293,6 +318,14 @@ func RetrieveBlobController(c *fiber.Ctx) error {
 	return c.Send(data)
 }
 
+// @Summary Retrieves blob by commitment hash
+// @Description Retrieves a blob from Celestia DA by commitment hash
+// @Produce octet-stream
+// @Param hash path string true "Commitment hash"
+// @Success 200 {file} byte
+// @Failure 400 {object} Response
+// @Router /{hash} [get]
+// @tags Celestia DA
 func RetrieveBlobByCommitment(c *fiber.Ctx) error {
 	hashStr := c.Params("hash") // URL 파라미터에서 해시 값 가져오기
 	l.Infof("Received hash: %s\n", hashStr)
@@ -328,6 +361,15 @@ func RetrieveBlobByCommitment(c *fiber.Ctx) error {
 	return c.Send(blob.Data)
 }
 
+// @Summary Retrieves blob by namespace key and index number
+// @Description Retrieves a blob from Celestia DA by namespace key and index number
+// @Produce octet-stream
+// @Param namespace path string true "Namespace key"
+// @Param index_number path int true "Index number"
+// @Success 200 {file} byte
+// @Failure 400 {object} Response
+// @Router /{namespace}/{index_number} [get]
+// @tags Celestia DA
 func RetrieveBlobByNamespaceKey(c *fiber.Ctx) error {
 	// l.Infoln("RetrieveBlobByNamespaceKey")
 	namespace := c.Params("namespace")

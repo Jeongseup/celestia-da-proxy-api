@@ -1,5 +1,7 @@
 basePath: /
 definitions:
+  main.Data:
+    type: object
   main.Response:
     properties:
       error:
@@ -8,58 +10,68 @@ definitions:
       success:
         type: boolean
     type: object
-host: localhost:3000
+host: nftinfo.online
 info:
   contact:
-    email: support@swagger.io
+    email: seup87@@gmail.com
     name: API Support
-    url: http://www.swagger.io/support
+    url: https://github.com/Jeongseup
   description: This is a sample server.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Fiber Swagger Example API
+  title: Celestia DA API
   version: "1.0"
 paths:
-  /:
+  /{hash}:
     get:
-      consumes:
-      - '*/*'
-      description: get the status of server.
+      description: Retrieves a blob from Celestia DA by commitment hash
+      parameters:
+      - description: Commitment hash
+        in: path
+        name: hash
+        required: true
+        type: string
       produces:
-      - application/json
+      - application/octet-stream
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
-      summary: Show the status of server.
-      tags:
-      - root
-  /error:
-    get:
-      description: Responds with a test error message
-      produces:
-      - application/json
-      responses:
+            type: file
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/main.Response'
-      summary: Returns an error message
-  /hello:
+      summary: Retrieves blob by commitment hash
+      tags:
+      - Celestia DA
+  /{namespace}/{index_number}:
     get:
-      description: Responds with a simple hello message
+      description: Retrieves a blob from Celestia DA by namespace key and index number
+      parameters:
+      - description: Namespace key
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: Index number
+        in: path
+        name: index_number
+        required: true
+        type: integer
       produces:
-      - application/json
+      - application/octet-stream
       responses:
         "200":
           description: OK
           schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
             $ref: '#/definitions/main.Response'
-      summary: Returns a hello message
+      summary: Retrieves blob by namespace key and index number
+      tags:
+      - Celestia DA
   /node_info:
     get:
       description: Pings Celestia DA node and returns node info
@@ -75,4 +87,81 @@ paths:
           schema:
             $ref: '#/definitions/main.Response'
       summary: Returns Celestia DA node info
+      tags:
+      - Celestia DA
+  /retrieve_blob:
+    get:
+      description: Retrieves a blob from Celestia DA by height and namespace key
+      parameters:
+      - description: Block height
+        in: query
+        name: height
+        required: true
+        type: integer
+      - description: Namespace key
+        in: query
+        name: namespace_key
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Retrieves blob by height and namespace key
+      tags:
+      - Celestia DA
+  /submit_formdata:
+    post:
+      description: Submits form data (image) to Celestia DA
+      parameters:
+      - description: Image file
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Submits form data
+      tags:
+      - Celestia DA
+  /submit_metadata:
+    post:
+      description: Submits JSON data to Celestia DA
+      parameters:
+      - description: Data payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/main.Data'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.Response'
+      summary: Submits JSON data
+      tags:
+      - Celestia DA
 swagger: "2.0"

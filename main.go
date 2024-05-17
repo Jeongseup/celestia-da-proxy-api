@@ -11,6 +11,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/redirect"
+
 	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -23,19 +26,16 @@ var (
 	db                 *sql.DB
 )
 
-// @title Fiber Swagger Example API
+// @title Celestia DA API
 // @version 1.0
 // @description This is a sample server.
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.url https://github.com/Jeongseup
+// @contact.email seup87@@gmail.com
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host localhost:3000
+// @host nftinfo.online
 // @BasePath /
 func main() {
 	// .env 파일 로드
@@ -72,6 +72,7 @@ func main() {
 	defer db.Close()
 
 	app := fiber.New()
+	app.Use(recover.New())
 
 	// Fiber 로거 미들웨어를 logrus와 통합
 	app.Use(logger.New(logger.Config{
@@ -82,6 +83,14 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*", // 모든 도메인에서 오는 요청을 허용합니다. 특정 도메인만 허용하려면 해당 도메인을 지정하십시오.
 		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
+
+	// HTTP to HTTPS 리디렉션 미들웨어
+	app.Use(redirect.New(redirect.Config{
+		Rules: map[string]string{
+			"nftonline.info": "https://nftonline.info",
+		},
+		StatusCode: 301,
 	}))
 
 	// Swagger 문서 라우트 설정
@@ -97,14 +106,14 @@ func main() {
 	app.Get("/error", ErrorCheck)
 
 	// routes for da
-	app.Get("/node_info", NodeInfoController)
 	app.Post("/submit_metadata", SubmitJSONDataController)
 	app.Post("/submit_formdata", SubmitFormDataController)
 
-	app.Get("/retrieve_blob", RetrieveBlobController)
-
+	app.Get("/node_info", NodeInfoController)
 	app.Get("/:namespace/:index_number", RetrieveBlobByNamespaceKey)
 	app.Get("/:hash", RetrieveBlobByCommitment)
+
+	app.Get("/retrieve_blob", RetrieveBlobController)
 
 	// start server...
 	port := os.Getenv("PORT")

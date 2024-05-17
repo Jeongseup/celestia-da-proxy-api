@@ -2,85 +2,26 @@
     "swagger": "2.0",
     "info": {
         "description": "This is a sample server.",
-        "title": "Fiber Swagger Example API",
+        "title": "Celestia DA API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+            "url": "https://github.com/Jeongseup",
+            "email": "seup87@@gmail.com"
         },
         "version": "1.0"
     },
-    "host": "localhost:3000",
+    "host": "nftinfo.online",
     "basePath": "/",
     "paths": {
-        "/": {
-            "get": {
-                "description": "get the status of server.",
-                "consumes": [
-                    "*/*"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "root"
-                ],
-                "summary": "Show the status of server.",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/error": {
-            "get": {
-                "description": "Responds with a test error message",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Returns an error message",
-                "responses": {
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/main.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/hello": {
-            "get": {
-                "description": "Responds with a simple hello message",
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Returns a hello message",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/node_info": {
             "get": {
                 "description": "Pings Celestia DA node and returns node info",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "Celestia DA"
                 ],
                 "summary": "Returns Celestia DA node info",
                 "responses": {
@@ -98,9 +39,203 @@
                     }
                 }
             }
+        },
+        "/retrieve_blob": {
+            "get": {
+                "description": "Retrieves a blob from Celestia DA by height and namespace key",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Celestia DA"
+                ],
+                "summary": "Retrieves blob by height and namespace key",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Block height",
+                        "name": "height",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Namespace key",
+                        "name": "namespace_key",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/submit_formdata": {
+            "post": {
+                "description": "Submits form data (image) to Celestia DA",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Celestia DA"
+                ],
+                "summary": "Submits form data",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/submit_metadata": {
+            "post": {
+                "description": "Submits JSON data to Celestia DA",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Celestia DA"
+                ],
+                "summary": "Submits JSON data",
+                "parameters": [
+                    {
+                        "description": "Data payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.Data"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/{hash}": {
+            "get": {
+                "description": "Retrieves a blob from Celestia DA by commitment hash",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Celestia DA"
+                ],
+                "summary": "Retrieves blob by commitment hash",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Commitment hash",
+                        "name": "hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/{namespace}/{index_number}": {
+            "get": {
+                "description": "Retrieves a blob from Celestia DA by namespace key and index number",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Celestia DA"
+                ],
+                "summary": "Retrieves blob by namespace key and index number",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace key",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Index number",
+                        "name": "index_number",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "main.Data": {
+            "type": "object"
+        },
         "main.Response": {
             "type": "object",
             "properties": {

@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/Jeongseup/celestia-da-proxy-api/docs" // yourproject 경로를 실제 프로젝트 경로로 변경하세요
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
@@ -77,6 +78,12 @@ func main() {
 		Output: log.Writer(),
 	}))
 
+	// CORS 미들웨어 설정
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*", // 모든 도메인에서 오는 요청을 허용합니다. 특정 도메인만 허용하려면 해당 도메인을 지정하십시오.
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
+
 	// Swagger 문서 라우트 설정
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
@@ -96,6 +103,7 @@ func main() {
 
 	app.Get("/retrieve_blob", RetrieveBlobController)
 
+	app.Get("/:namespace/:index_number", RetrieveBlobByNamespaceKey)
 	app.Get("/:hash", RetrieveBlobByCommitment)
 
 	// app.Get("/retrieve_blob_by_commitment", RetrieveBlobByCommitment)

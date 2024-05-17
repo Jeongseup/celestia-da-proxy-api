@@ -90,7 +90,7 @@ func GetBlobs(ctx context.Context, url string, token string, height uint64) ([]*
 }
 
 // SubmitBlob submits a blob containing "Hello, World!" to the 0xDEADBEEF namespace. It uses the default signer on the running node.
-func SubmitBlob(ctx context.Context, url string, token string, data []byte) (uint64, error) {
+func SubmitBlobImage(ctx context.Context, url string, token string, data []byte) (uint64, error) {
 	client, err := openrpc.NewClient(ctx, url, token)
 	if err != nil {
 		return 0, err
@@ -105,6 +105,53 @@ func SubmitBlob(ctx context.Context, url string, token string, data []byte) (uin
 	l.Infof("using namespace bytes: %X", celestiaDragonsNamespace)
 	l.Infof("using namespace bytes: %s", celestiaDragonsNamespace)
 	namespace, err := share.NewBlobNamespaceV0(celestiaDragonsNamespace)
+	if err != nil {
+		return 0, err
+	}
+
+	// create a blob
+	createdBlob, err := blobtypes.NewBlobV0(namespace, data)
+	if err != nil {
+		return 0, err
+	}
+
+	// submit the blob to the network
+	height, err := client.Blob.Submit(ctx, []*blobtypes.Blob{createdBlob}, openrpc.DefaultGasPrice())
+	if err != nil {
+		return 0, err
+	}
+
+	l.Infof("Blob was included at height %d\n", height)
+
+	// fetch the blob back from the network
+	retrievedBlobs, err := client.Blob.GetAll(ctx, height, []share.Namespace{namespace})
+	if err != nil {
+		return 0, err
+	}
+
+	// 그냥 해당 높이에 하나씩만 있다고 가정
+	for _, blob := range retrievedBlobs {
+		l.Printf("blob commitment: %v \n", blob.Commitment)
+		l.Printf("blob Namespace: %v \n", blob.Namespace)
+		l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
+		l.Printf("blob Data: %d \n", len(blob.Data))
+		l.Printf("blob index: %d \n", blob.Index)
+	}
+
+	// fmt.Printf("Blobs are equal? %v\n", bytes.Equal(helloWorldBlob.Commitment, retrievedBlobs[0].Commitment))
+	return height, nil
+}
+
+// SubmitBlob submits a blob containing "Hello, World!" to the 0xDEADBEEF namespace. It uses the default signer on the running node.
+func SubmitBlob(ctx context.Context, url string, token string, namespaceKey []byte, data []byte) (uint64, error) {
+	client, err := openrpc.NewClient(ctx, url, token)
+	if err != nil {
+		return 0, err
+	}
+
+	defer client.Close()
+
+	namespace, err := share.NewBlobNamespaceV0(namespaceKey)
 	if err != nil {
 		return 0, err
 	}

@@ -56,8 +56,9 @@ func ReceiveFormData(c *fiber.Ctx) error {
 }
 
 func ReceiveJSON(c *fiber.Ctx) error {
-	var payload Data
+	// l.Infoln("ReceiveJSON calling...")
 
+	var payload Data
 	if err := c.BodyParser(&payload); err != nil {
 		response := Response{
 			Success: false,
@@ -66,11 +67,15 @@ func ReceiveJSON(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
-	l.Infof("received data: %v", payload.Data)
+	l.Infof("received metadata: %v", payload.MetaData)
+	l.Infof("received namespace key: %v", payload.NamespaceKey)
 
 	response := Response{
 		Success: true,
-		Result:  payload.Data,
+		Result: fiber.Map{
+			"namespace_key": payload.NamespaceKey,
+			"metadata":      payload.MetaData,
+		},
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)

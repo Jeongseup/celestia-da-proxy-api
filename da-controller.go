@@ -3,9 +3,10 @@ package main
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 	"time"
 
@@ -36,11 +37,6 @@ func NodeInfoController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	// jsonBz, _ := headerInfo.MarshalJSON()
-	// var payload map[string]interface{}
-	// _ = json.Unmarshal(jsonBz, &payload)
-	// log.Infof("%s", payload)
-
 	response := Response{
 		Success: true,
 		Result: fiber.Map{
@@ -66,26 +62,23 @@ func SubmitJSONDataController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
-	var sendData []byte
-	if len(payload.MetaData) > 0 {
-		l.Infoln("received metadata!")
-		sendData = payload.MetaData
+	if payload.NamespaceKey == "" {
+		response := Response{
+			Success: false,
+			Error:   "namespace key is required for celestia da",
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
-	if len(payload.Data) > 0 {
-		l.Infoln("received data!")
-		sendData = payload.Data
-	}
+	encodedNamesapceKey := base64.StdEncoding.EncodeToString([]byte(payload.NamespaceKey))
+	namespaceKey := []byte(encodedNamesapceKey)[:10]
 
 	// create context
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	// svgStr := "data:image/svg+xml;base64,CiAgICAgIDxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+CiAgICAgICAgPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDAiIGZpbGw9IiNhZDExZjciIC8+CiAgICAgICAgPHRleHQgeD0iNTAiIHk9IjUwIiBmb250LXNpemU9IjEyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IndoaXRlIj5IYWNrYXRoZW15PC90ZXh0PgogICAgICA8L3N2Zz4KICAgIA=="
-	// svgBz := []byte(svgStr)
-
 	// submit data
-	height, err := SubmitBlob(ctx, celestiaRpcAddress, authToken, sendData)
+	height, err := SubmitBlob(ctx, celestiaRpcAddress, authToken, namespaceKey, payload.MetaData)
 	if err != nil {
 		l.Errorf("unexpected err: %s", err)
 		resp := Response{
@@ -95,21 +88,46 @@ func SubmitJSONDataController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	l.Infof("Blob was included at height %d\n", height)
+	l.Infof("Metadata Blob was included at height %d in %X namespace\n", height, namespaceKey)
 
-	// fetch the blob back from the network
-	// retrievedBlobs, err := GetAll(ctx, height, []share.Namespace{namespace})
-	// if err != nil {
-	// 	return err
-	// }
+	// retrieve blobs
+	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, height)
+	if err != nil {
+		resp := Response{
+			Success: false,
+			Error:   fmt.Sprintf("Successfully, submitted formdata to celestia da but, failed to retrieve blobs in the height. unexpected err: %s", err.Error()),
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
 
-	// fmt.Printf("Blobs are equal? %v\n", bytes.Equal(helloWorldBlob.Commitment, retrievedBlobs[0].Commitment))
+	var hashStr string
+	for _, blob := range retrievedBlobs {
+		if bytes.Equal(blob.Data, payload.MetaData) {
+			l.Infof("found matched metadata in blobs in %d height!", height)
+			l.Printf("blob commitment hash: %X \n", blob.Commitment)
+			// l.Printf("blob commitment: %s \n", blob.Commitment)
+			hashStr = fmt.Sprintf("%X", blob.Commitment)
+			break
+		}
+	}
+
+	// insert db hash for saving height
+	index, err := InsertNamespace(db, string(namespaceKey), hashStr, int(height))
+	if err != nil {
+		resp := Response{
+			Success: false,
+			Error:   fmt.Sprintf("Successfully, submitted formdata to celestia da but, failed to save commitment hash & height in db. unexpected err: %s", err.Error()),
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
 
 	response := Response{
 		Success: true,
 		Result: fiber.Map{
-			// "submitted_data": payload.Data,
-			"submitted_height": height,
+			"namespace_key":            string(namespaceKey),
+			"submitted_metadata_index": index,
+			"submitted_metadata":       payload.Data,
+			"submitted_height":         height,
 		},
 	}
 	return c.JSON(response)
@@ -158,7 +176,7 @@ func SubmitFormDataController(c *fiber.Ctx) error {
 	defer cancel()
 
 	// submit data
-	height, err := SubmitBlob(ctx, celestiaRpcAddress, authToken, fileBytes)
+	height, err := SubmitBlobImage(ctx, celestiaRpcAddress, authToken, fileBytes)
 	if err != nil {
 		l.Errorf("unexpected err: %s", err)
 		resp := Response{
@@ -168,7 +186,7 @@ func SubmitFormDataController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	l.Infof("Blob was included at height %d\n", height)
+	l.Infof("FormData Blob was included at height %d\n", height)
 
 	// retrieve blobs
 	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, height)
@@ -261,7 +279,6 @@ func RetrieveBlobController(c *fiber.Ctx) error {
 }
 
 func RetrieveBlobByCommitment(c *fiber.Ctx) error {
-
 	hashStr := c.Params("hash") // URL 파라미터에서 해시 값 가져오기
 	l.Infof("Received hash: %s\n", hashStr)
 
@@ -296,31 +313,53 @@ func RetrieveBlobByCommitment(c *fiber.Ctx) error {
 	return c.Send(blob.Data)
 }
 
-func TestBlobController(c *fiber.Ctx) error {
+func RetrieveBlobByNamespaceKey(c *fiber.Ctx) error {
+	namespace := c.Params("namespace")
+	index := c.Params("index")
+
+	l.Infof(namespace, index)
+
+	var namespaceIndex int
+	_, err := fmt.Sscanf(index, "%d", &namespaceIndex)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid index",
+		})
+	}
+
+	hashStr, height, err := GetNamespaceData(db, namespace, namespaceIndex)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "data not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// create context
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	l.Println("=== test case 4 : GetBlobs ===")
-	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, 1826272)
+	// get blob by height and commitment hash
+	blob, err := GetBlob(ctx, celestiaRpcAddress, authToken, uint64(height), hashStr)
 	if err != nil {
-		log.Println(err)
-	}
-	l.Println("================================")
-
-	for _, blob := range retrievedBlobs {
-		jsonBz, err := blob.MarshalJSON()
-		if err != nil {
-			return err
+		l.Errorf("unexpected err: %s", err)
+		resp := Response{
+			Success: false,
+			Error:   err.Error(),
 		}
-
-		l.Infof("json: %s\n", jsonBz) // base64 encoded
-		l.Printf("blob commitment: %X \n", blob.Commitment)
-		l.Printf("blob Namespace: %X \n", blob.Namespace)
-		l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
-		l.Printf("blob Data: %s \n", blob.Data)
-		l.Printf("blob index: %d \n", blob.Index)
-		l.Printf("blob ShareVersion: %d \n", blob.ShareVersion)
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	l.Printf("blob commitment: %X \n", blob.Commitment)
+	l.Printf("blob Namespace: %X \n", blob.Namespace)
+	l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
+	l.Printf("blob Data: %d \n", len(blob.Data))
+	l.Printf("blob Data: %s \n", (blob.Data))
+	l.Printf("blob index: %d \n", blob.Index)
+
+	return c.Send(blob.Data)
 }

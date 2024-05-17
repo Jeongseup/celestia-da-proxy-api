@@ -71,7 +71,12 @@ func SubmitJSONDataController(c *fiber.Ctx) error {
 	}
 
 	encodedNamesapceKey := base64.StdEncoding.EncodeToString([]byte(payload.NamespaceKey))
-	namespaceKey := []byte(encodedNamesapceKey)[:10]
+	var namespaceKey []byte
+	if len([]byte(encodedNamesapceKey)) > 10 {
+		namespaceKey = []byte(encodedNamesapceKey)[:10]
+	} else {
+		namespaceKey = []byte(encodedNamesapceKey)
+	}
 
 	// create context
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

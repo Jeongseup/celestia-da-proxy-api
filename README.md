@@ -128,3 +128,5 @@ https://www.based64.xyz/
 https://docs.celestia.org/developers/golang-client-tutorial
 
 https://docs.opensea.io/docs/metadata-standards
+
+https://github.com/celestiaorg/celestia-openrpc

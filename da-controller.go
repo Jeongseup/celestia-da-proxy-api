@@ -314,13 +314,13 @@ func RetrieveBlobByCommitment(c *fiber.Ctx) error {
 }
 
 func RetrieveBlobByNamespaceKey(c *fiber.Ctx) error {
+	// l.Infoln("RetrieveBlobByNamespaceKey")
 	namespace := c.Params("namespace")
-	index := c.Params("index")
-
-	l.Infof(namespace, index)
+	index_number := c.Params("index_number")
+	l.Infof("namespace: %s and index_number: %s", namespace, index_number)
 
 	var namespaceIndex int
-	_, err := fmt.Sscanf(index, "%d", &namespaceIndex)
+	_, err := fmt.Sscanf(index_number, "%d", &namespaceIndex)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid index",
@@ -353,13 +353,6 @@ func RetrieveBlobByNamespaceKey(c *fiber.Ctx) error {
 		}
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
-
-	l.Printf("blob commitment: %X \n", blob.Commitment)
-	l.Printf("blob Namespace: %X \n", blob.Namespace)
-	l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
-	l.Printf("blob Data: %d \n", len(blob.Data))
-	l.Printf("blob Data: %s \n", (blob.Data))
-	l.Printf("blob index: %d \n", blob.Index)
 
 	return c.Send(blob.Data)
 }

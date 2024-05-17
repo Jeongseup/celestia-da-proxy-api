@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
@@ -93,6 +95,16 @@ func SubmitJSONDataController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
+	l.Infof("Blob was included at height %d\n", height)
+
+	// fetch the blob back from the network
+	// retrievedBlobs, err := GetAll(ctx, height, []share.Namespace{namespace})
+	// if err != nil {
+	// 	return err
+	// }
+
+	// fmt.Printf("Blobs are equal? %v\n", bytes.Equal(helloWorldBlob.Commitment, retrievedBlobs[0].Commitment))
+
 	response := Response{
 		Success: true,
 		Result: fiber.Map{
@@ -156,15 +168,51 @@ func SubmitFormDataController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
+	l.Infof("Blob was included at height %d\n", height)
+
+	// retrieve blobs
+	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, height)
+	if err != nil {
+		// l.Errorf("Successfully, submitted formdata to celestia da but, failed to retrieve blobs in the height. unexpected err: %s", err)
+		resp := Response{
+			Success: false,
+			Error:   fmt.Sprintf("Successfully, submitted formdata to celestia da but, failed to retrieve blobs in the height. unexpected err: %s", err.Error()),
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
+	var hashStr string
+	for _, blob := range retrievedBlobs {
+		if bytes.Equal(blob.Data, fileBytes) {
+			// l.Infoln("equal!")
+			l.Printf("blob commitment hash: %X \n", blob.Commitment)
+			// l.Printf("blob commitment: %s \n", blob.Commitment)
+			hashStr = fmt.Sprintf("%X", blob.Commitment)
+			break
+		}
+	}
+
+	// insert db hash for saving height
+	err = InsertBlob(db, hashStr, int(height))
+	if err != nil {
+		resp := Response{
+			Success: false,
+			Error:   fmt.Sprintf("Successfully, submitted formdata to celestia da but, failed to save commitment hash & height in db. unexpected err: %s", err.Error()),
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
+	}
+
 	response := Response{
 		Success: true,
 		Result: fiber.Map{
-			// "submitted_data": payload.Data,
+			"hash":             hashStr,
 			"submitted_height": height,
 		},
 	}
+
 	return c.JSON(response)
 }
+
 func RetrieveBlobController(c *fiber.Ctx) error {
 	retrieveHeightStr := c.Query("height")
 
@@ -194,66 +242,42 @@ func RetrieveBlobController(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	// var jsonBlobs []json.RawMessage
-
 	var data []byte
 
-	// 각 블롭을 직렬화하고 리스트에 추가
+	// 각 블롭을 직렬화하고 리스트에 추가 (그냥 하나만 있다고 가정)
 	for _, blob := range retrievedBlobs {
 		l.Printf("blob commitment: %X \n", blob.Commitment)
 		l.Printf("blob Namespace: %X \n", blob.Namespace)
-		// l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
+		l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
 		l.Printf("blob Data: %d \n", len(blob.Data))
 		l.Printf("blob index: %d \n", blob.Index)
-		// l.Printf("blob ShareVersion: %d \n", blob.ShareVersion)
+		l.Printf("blob ShareVersion: %d \n", blob.ShareVersion)
 
-		// jsonBz, err := blob.MarshalJSON()
-		// if err != nil {
-		// 	return err
-		// }
-
-		// jsonBlobs = append(jsonBlobs, jsonBz)
 		data = blob.Data
 		break
 	}
 
-	// response := Response{
-	// 	Success: true,
-	// 	Result:  data,
-	// }
-
 	return c.Send(data)
 }
 
-func RetrieveBlobController2(c *fiber.Ctx) error {
-	var payload Data
+func RetrieveBlobByCommitment(c *fiber.Ctx) error {
 
-	// 요청 본문을 JSON으로 파싱
-	if err := c.BodyParser(&payload); err != nil {
-		response := Response{
-			Success: false,
-			Error:   err.Error(),
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(response)
+	hashStr := c.Params("hash") // URL 파라미터에서 해시 값 가져오기
+	l.Infof("Received hash: %s\n", hashStr)
+
+	retrieveHeight, err := GetBlobHeight(db, hashStr)
+	if err != nil {
+		return err
 	}
 
-	l.Infof("received height: %s", payload.RetrieveHeight)
+	l.Infof("Found height by hash: %d\n", retrieveHeight)
 
 	// create context
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	retrieveHeight, err := strconv.ParseUint(payload.RetrieveHeight, 10, 64)
-	if err != nil {
-		response := Response{
-			Success: false,
-			Error:   err.Error(),
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(response)
-	}
-
 	// submit data
-	retrievedBlobs, err := GetBlobs(ctx, celestiaRpcAddress, authToken, retrieveHeight)
+	blob, err := GetBlob(ctx, celestiaRpcAddress, authToken, uint64(retrieveHeight), hashStr)
 	if err != nil {
 		l.Errorf("unexpected err: %s", err)
 		resp := Response{
@@ -263,33 +287,13 @@ func RetrieveBlobController2(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
-	// var jsonBlobs []json.RawMessage
+	l.Printf("blob commitment: %X \n", blob.Commitment)
+	l.Printf("blob Namespace: %X \n", blob.Namespace)
+	l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
+	l.Printf("blob Data: %d \n", len(blob.Data))
+	l.Printf("blob index: %d \n", blob.Index)
 
-	var data []byte
-
-	// 각 블롭을 직렬화하고 리스트에 추가
-	for _, blob := range retrievedBlobs {
-		l.Printf("blob commitment: %X \n", blob.Commitment)
-		l.Printf("blob Namespace: %X \n", blob.Namespace)
-		// l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
-		l.Printf("blob Data: %d \n", len(blob.Data))
-		l.Printf("blob index: %d \n", blob.Index)
-		// l.Printf("blob ShareVersion: %d \n", blob.ShareVersion)
-
-		// jsonBz, err := blob.MarshalJSON()
-		// if err != nil {
-		// 	return err
-		// }
-
-		// jsonBlobs = append(jsonBlobs, jsonBz)
-	}
-
-	// response := Response{
-	// 	Success: true,
-	// 	Result:  data,
-	// }
-
-	return c.Send(data)
+	return c.Send(blob.Data)
 }
 
 func TestBlobController(c *fiber.Ctx) error {

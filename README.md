@@ -5,6 +5,15 @@ Descrption...
 ## Example
 
 ```bash
+ curl --location 'http://localhost:3000/submit_formdata' \
+--form 'image=@"/Users/jeongseup/Downloads/CelestiaDragonsNFT/DALL·E 2024-05-15 19.11.55 - A cute, animated-style dragon designed to be stored on a blockchain named Celestia. The dragon has big, sparkling eyes and a small, friendly smile. It.webp"'
+
+#{"success":true,"result":{"hash":"97110C95BB4FD3BDD7520744A2FA8C03DC034DDE2C668647784F32A4BAE14E8C","submitted_height":1844378}}%
+
+# curl -X GET 'http://localhost:3000/97110C95BB4FD3BDD7520744A2FA8C03DC034DDE2C668647784F32A4BAE14E8C'
+```
+
+```bash
 # submit blob
 curl -X POST http://localhost:3000/submit_blob -H "Content-Type: application/json" -d '{"data":"SGVsbG8gV29ybGQ="}'
 

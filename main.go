@@ -63,7 +63,8 @@ func main() {
 	l.SetLevel(level)
 
 	// Initialize SQLite database
-	db, err = InitDB("./data.db")
+	dbName := "celestia-dragons.db" // export envs
+	db, err = InitDB(dbName)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -92,35 +93,20 @@ func main() {
 	app.Get("/node_info", NodeInfoController)
 	app.Post("/submit_metadata", SubmitJSONDataController)
 	app.Post("/submit_formdata", SubmitFormDataController)
-	app.Post("/retrieve_blob", RetrieveBlobController2)
+
 	app.Get("/retrieve_blob", RetrieveBlobController)
+
+	app.Get("/:hash", RetrieveBlobByCommitment)
+
+	// app.Get("/retrieve_blob_by_commitment", RetrieveBlobByCommitment)
 
 	// start server...
 	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
 	if err := app.Listen(fmt.Sprintf(":%s", port)); err != nil {
 		panic(err)
 	}
 }
-
-/*
-
-
-	// test 2
-	log.Println("=== test case 2 : SubmitBlob ===")
-	err = SubmitBlob(ctx, rpcAddress, authToken)
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println("================================")
-
-	// test 3
-	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	log.Println("=== test case 3 : Balance ===")
-	err = Balance(ctx, rpcAddress, authToken)
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println("================================")
-*/

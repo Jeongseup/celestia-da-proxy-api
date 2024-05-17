@@ -2,12 +2,19 @@ package main
 
 import (
 	"context"
-	"log"
+	"encoding/base64"
+	"encoding/hex"
 
 	openrpc "github.com/celestiaorg/celestia-openrpc"
-	"github.com/celestiaorg/celestia-openrpc/types/blob"
+	blobtypes "github.com/celestiaorg/celestia-openrpc/types/blob"
 	"github.com/celestiaorg/celestia-openrpc/types/header"
 	"github.com/celestiaorg/celestia-openrpc/types/share"
+)
+
+// must be namespace less than 10bytes
+var (
+	encodedNamesapce         = base64.StdEncoding.EncodeToString([]byte("CelestiaDragons"))
+	celestiaDragonsNamespace = []byte(encodedNamesapce)[:10]
 )
 
 func NodePing(ctx context.Context, url string, token string) (header.ExtendedHeader, error) {
@@ -22,24 +29,10 @@ func NodePing(ctx context.Context, url string, token string) (header.ExtendedHea
 		return header.ExtendedHeader{}, err
 	}
 
-	// log.Printf("chain id: %s", resp.ChainID())
-	// log.Printf("height: %d", resp.Height())
-
-	// info, err := client.Node.Info(ctx)
-	// if err != nil {
-	// 	return header.ExtendedHeader{}, err
-	// }
-
-	// log.Printf("api version: %s", info.APIVersion)
-
-	// Type defines the Node type (e.g. `light`, `bridge`) for identity purposes.
-	// The zero value for Type is invalid.
-	// log.Printf("node type: %v", info.Type)
-
 	return *resp, nil
 }
 
-func GetBlob(ctx context.Context, url string, token string, height uint64, namespaceID []byte) (*blob.Blob, error) {
+func GetBlob(ctx context.Context, url string, token string, height uint64, hashStr string) (*blobtypes.Blob, error) {
 	client, err := openrpc.NewClient(ctx, url, token)
 	if err != nil {
 		return nil, err
@@ -48,15 +41,23 @@ func GetBlob(ctx context.Context, url string, token string, height uint64, names
 	defer client.Close()
 
 	// let's post to 0xDEADBEEF namespace
-	namespace, err := share.NewBlobNamespaceV0(namespaceID)
+	namespace, err := share.NewBlobNamespaceV0(celestiaDragonsNamespace)
 	if err != nil {
 		return nil, err
 	}
 
-	// func NewBlobV0(namespace share.Namespace, data []byte) (*Blob, error) {
+	// share.NewBlobV0(namespace data []byte) (*Blob, error) {
+	// hex 값을 string으로 표현
+	// hexString := "13BC10A978B617DB8F7837A0B62E7C5FAE843876c916D83EF18D6005466CDF07"
+
+	// string을 []byte로 변환
+	data, err := hex.DecodeString(hashStr)
+	if err != nil {
+		return nil, err
+	}
 
 	// fetch the blob back from the network
-	blob, err := client.Blob.Get(ctx, height, namespace, blob.Commitment{})
+	blob, err := client.Blob.Get(ctx, height, namespace, data)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +67,7 @@ func GetBlob(ctx context.Context, url string, token string, height uint64, names
 
 // Blob was included at height 1826272
 // Blobs are equal? false
-func GetBlobs(ctx context.Context, url string, token string, height uint64) ([]*blob.Blob, error) {
+func GetBlobs(ctx context.Context, url string, token string, height uint64) ([]*blobtypes.Blob, error) {
 	client, err := openrpc.NewClient(ctx, url, token)
 	if err != nil {
 		return nil, err
@@ -75,7 +76,7 @@ func GetBlobs(ctx context.Context, url string, token string, height uint64) ([]*
 	defer client.Close()
 
 	// let's post to 0xDEADBEEF namespace
-	namespace, err := share.NewBlobNamespaceV0([]byte{0xDE, 0xAD, 0xBE, 0xEF})
+	namespace, err := share.NewBlobNamespaceV0(celestiaDragonsNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -85,27 +86,6 @@ func GetBlobs(ctx context.Context, url string, token string, height uint64) ([]*
 		return nil, err
 	}
 
-	// for _, blob := range retrievedBlobs {
-	// 	jsonBz, err := blob.MarshalJSON()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	fmt.Printf("json: %s\n", jsonBz) // base64 encoded
-
-	// 	fmt.Printf("blob commitment: %X \n", blob.Commitment)
-	// 	fmt.Printf("blob Namespace: %X \n", blob.Namespace)
-	// 	fmt.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
-	// 	fmt.Printf("blob commitment: %s \n", blob.Data)
-	// 	fmt.Printf("blob index: %d \n", blob.Index)
-	// 	fmt.Printf("blob ShareVersion: %d \n", blob.ShareVersion)
-	// 	// fmt.Printf("%v blob in %d height\n", blob, height)
-	// 	// fmt.Printf("%v blob in %d height\n", blob, height)
-	// 	// fmt.Printf("%v blob in %d height\n", blob, height)
-	// 	// fmt.Printf("%v blob in %d height\n", blob, height)
-	// }
-
-	// fmt.Printf("Blobs are equal? %v ", retrievedBlobs[0].Commitment)
 	return retrievedBlobs, nil
 }
 
@@ -119,19 +99,24 @@ func SubmitBlob(ctx context.Context, url string, token string, data []byte) (uin
 	defer client.Close()
 
 	// let's post to 0xDEADBEEF namespace
-	namespace, err := share.NewBlobNamespaceV0([]byte{0xDE, 0xAD, 0xBE, 0xEF})
+	// If it is less than 10 bytes, it will be left padded to size 10 with 0s.
+	// namespace, err := share.NewBlobNamespaceV0([]byte{0xDE, 0xAD, 0xBE, 0xEF})
+	l.Infof("using namespace bytes: %v", celestiaDragonsNamespace)
+	l.Infof("using namespace bytes: %X", celestiaDragonsNamespace)
+	l.Infof("using namespace bytes: %s", celestiaDragonsNamespace)
+	namespace, err := share.NewBlobNamespaceV0(celestiaDragonsNamespace)
 	if err != nil {
 		return 0, err
 	}
 
 	// create a blob
-	createdBlob, err := blob.NewBlobV0(namespace, data)
+	createdBlob, err := blobtypes.NewBlobV0(namespace, data)
 	if err != nil {
 		return 0, err
 	}
 
 	// submit the blob to the network
-	height, err := client.Blob.Submit(ctx, []*blob.Blob{createdBlob}, openrpc.DefaultGasPrice())
+	height, err := client.Blob.Submit(ctx, []*blobtypes.Blob{createdBlob}, openrpc.DefaultGasPrice())
 	if err != nil {
 		return 0, err
 	}
@@ -139,39 +124,20 @@ func SubmitBlob(ctx context.Context, url string, token string, data []byte) (uin
 	l.Infof("Blob was included at height %d\n", height)
 
 	// fetch the blob back from the network
-	// retrievedBlobs, err := client.Blob.GetAll(ctx, height, []share.Namespace{namespace})
-	// if err != nil {
-	// 	return err
-	// }
+	retrievedBlobs, err := client.Blob.GetAll(ctx, height, []share.Namespace{namespace})
+	if err != nil {
+		return 0, err
+	}
 
-	// for
-	// l.Infoln(retrievedBlobs)
+	// 그냥 해당 높이에 하나씩만 있다고 가정
+	for _, blob := range retrievedBlobs {
+		l.Printf("blob commitment: %v \n", blob.Commitment)
+		l.Printf("blob Namespace: %v \n", blob.Namespace)
+		l.Printf("blob NamespaceVersion: %d \n", blob.NamespaceVersion)
+		l.Printf("blob Data: %d \n", len(blob.Data))
+		l.Printf("blob index: %d \n", blob.Index)
+	}
+
 	// fmt.Printf("Blobs are equal? %v\n", bytes.Equal(helloWorldBlob.Commitment, retrievedBlobs[0].Commitment))
 	return height, nil
-}
-
-func Balance(ctx context.Context, url string, token string) error {
-	client, err := openrpc.NewClient(ctx, url, token)
-	if err != nil {
-		return err
-	}
-
-	defer client.Close()
-
-	// account, err := client.State.AccountAddress(ctx)
-	// if err != nil {
-	// 	fmt.Println("here")
-	// 	return err
-
-	// }
-
-	log.Println("account address : celestia1ynrht4f0jnltat30vqlzcw62z3jra49fc0xdx5")
-
-	balance, err := client.State.Balance(ctx)
-	if err != nil {
-		return err
-	}
-
-	log.Println(balance.Denom, balance.Amount)
-	return nil
 }

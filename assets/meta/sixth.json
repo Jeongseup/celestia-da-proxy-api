@@ -1,0 +1,30 @@
+{
+  "namespace_key": "CelestiaDragonsMetaData",
+  "metadata": {
+    "description": "Celestia DA Based Dragon NFT Collection",
+    "image": "https://nftinfo.online/E231229BC6FDD8B61BBCEA3B072F2E745BE9DDA014E8F3C6DDAA54AE5C8D1D22",
+    "name": "Celestia Sixth DA Dragon",
+    "attributes": [
+      {
+        "trait_type": "Color Palette",
+        "value": "Royal purple and electric blues"
+      },
+      {
+        "trait_type": "Environment",
+        "value": "Mystical forest"
+      },
+      {
+        "trait_type": "Disposition",
+        "value": "Adventurous and bold"
+      },
+      {
+        "trait_type": "Special Feature",
+        "value": "Star-speckled night sky wings"
+      },
+      {
+        "trait_type": "Magic Power",
+        "value": "Can travel through portals"
+      }
+    ]
+  }
+}

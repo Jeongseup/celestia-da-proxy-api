@@ -1,0 +1,30 @@
+{
+  "namespace_key": "CelestiaDragonsMetaData",
+  "metadata": {
+    "description": "Celestia DA Based Dragon NFT Collection",
+    "image": "https://nftinfo.online/9E123424CA2BFF8AC2A4380C957955E608E4FF7ACF74C5B3BF5E700262009D8C",
+    "name": "Celestia Fourth DA Dragon",
+    "attributes": [
+      {
+        "trait_type": "Color Palette",
+        "value": "Fiery reds and deep oranges"
+      },
+      {
+        "trait_type": "Environment",
+        "value": "Sky with floating embers"
+      },
+      {
+        "trait_type": "Disposition",
+        "value": "Spirited and warm"
+      },
+      {
+        "trait_type": "Special Feature",
+        "value": "Flame-like sleek wings"
+      },
+      {
+        "trait_type": "Magic Power",
+        "value": "Controls fire"
+      }
+    ]
+  }
+}

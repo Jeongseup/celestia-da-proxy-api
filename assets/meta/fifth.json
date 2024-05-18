@@ -1,0 +1,30 @@
+{
+  "namespace_key": "CelestiaDragonsMetaData",
+  "metadata": {
+    "description": "Celestia DA Based Dragon NFT Collection",
+    "image": "https://nftinfo.online/5FF6A7FCB9C0BBB0278DDBA84CE86A11A44785532BC11E56D77AB261C2EF43BC",
+    "name": "Celestia Fifth DA Dragon",
+    "attributes": [
+      {
+        "trait_type": "Color Palette",
+        "value": "Seafoam greens and aqua blues"
+      },
+      {
+        "trait_type": "Environment",
+        "value": "Lakeside under a moonlit sky"
+      },
+      {
+        "trait_type": "Disposition",
+        "value": "Peaceful and soothing"
+      },
+      {
+        "trait_type": "Special Feature",
+        "value": "Watery, flowing wings"
+      },
+      {
+        "trait_type": "Magic Power",
+        "value": "Can purify water"
+      }
+    ]
+  }
+}

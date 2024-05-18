@@ -1,0 +1,30 @@
+{
+  "namespace_key": "CelestiaDragonsMetaData",
+  "metadata": {
+    "description": "Celestia DA Based Dragon NFT Collection",
+    "image": "https://nftinfo.online/65DC84875F7B9BB96FDCA7B465B4C2CCD62CEEA33EC93F4E16304B09333EB2B5",
+    "name": "Celestia Second DA Dragon",
+    "attributes": [
+      {
+        "trait_type": "Color Palette",
+        "value": "Emerald greens and bright yellows"
+      },
+      {
+        "trait_type": "Environment",
+        "value": "Fantasy landscape with sparkling rivers"
+      },
+      {
+        "trait_type": "Disposition",
+        "value": "Mischievous and lively"
+      },
+      {
+        "trait_type": "Special Feature",
+        "value": "Wings that glow like fireflies"
+      },
+      {
+        "trait_type": "Magic Power",
+        "value": "Emits a glowing aura"
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "namespace_key": "CelestiaDragonsMetaData",
+  "metadata": {
+    "description": "Celestia DA Based Dragon NFT Collection",
+    "image": "https://nftinfo.online/EA842E20E75CBF00F2CB61B596C4E4D8AF052CE33EC95424B5E89846A7948157",
+    "name": "Celestia Tenth DA Dragon",
+    "attributes": [
+      {
+        "trait_type": "Color Palette",
+        "value": "Earthy browns and deep greens"
+      },
+      {
+        "trait_type": "Environment",
+        "value": "Tranquil stream in a lush forest"
+      },
+      {
+        "trait_type": "Disposition",
+        "value": "Serene and wise"
+      },
+      {
+        "trait_type": "Special Feature",
+        "value": "Broad and leaf-like wings"
+      },
+      {
+        "trait_type": "Magic Power",
+        "value": "Can communicate with forest creatures"
+      }
+    ]
+  }
+}

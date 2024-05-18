@@ -1,0 +1,30 @@
+{
+  "namespace_key": "CelestiaDragonsMetaData",
+  "metadata": {
+    "description": "Celestia DA Based Dragon NFT Collection",
+    "image": "https://nftinfo.online/67E6E0F30E101D2D77C78AC8846527DE416AC3A880F9B59D31DEC9459590AFCF",
+    "name": "Celestia Third DA Dragon",
+    "attributes": [
+      {
+        "trait_type": "Color Palette",
+        "value": "Soft blues and silvery whites"
+      },
+      {
+        "trait_type": "Environment",
+        "value": "Snowy mountain peaks"
+      },
+      {
+        "trait_type": "Disposition",
+        "value": "Gentle and calm"
+      },
+      {
+        "trait_type": "Special Feature",
+        "value": "Feathery, snow-like wings"
+      },
+      {
+        "trait_type": "Magic Power",
+        "value": "Can conjure snow and ice"
+      }
+    ]
+  }
+}

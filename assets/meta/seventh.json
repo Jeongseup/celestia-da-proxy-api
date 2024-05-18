@@ -1,0 +1,30 @@
+{
+  "namespace_key": "CelestiaDragonsMetaData",
+  "metadata": {
+    "description": "Celestia DA Based Dragon NFT Collection",
+    "image": "https://nftinfo.online/318FA0035A4761188F920B773EF79CD0B45FC2E50FDEACF70953F951CC01B1DC",
+    "name": "Celestia Seventh DA Dragon",
+    "attributes": [
+      {
+        "trait_type": "Color Palette",
+        "value": "Gold and sunset orange"
+      },
+      {
+        "trait_type": "Environment",
+        "value": "Ancient grove with runes"
+      },
+      {
+        "trait_type": "Disposition",
+        "value": "Curious and wise"
+      },
+      {
+        "trait_type": "Special Feature",
+        "value": "Golden, feathered wings"
+      },
+      {
+        "trait_type": "Magic Power",
+        "value": "Can decipher ancient languages"
+      }
+    ]
+  }
+}
